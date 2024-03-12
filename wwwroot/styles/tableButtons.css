@@ -1,0 +1,41 @@
+﻿.btn-update {
+    color: #fff;
+    background-color: indigo;
+    border-color: indigo
+}
+
+    .btn-update:hover {
+        color: #fff;
+        background-color: #5D3587;
+        border-color: #5D3587
+    }
+
+.btn-delete {
+    color: #fff;
+    background-color: #6f42c1;
+    border-color: #6f42c1
+}
+
+    .btn-delete:hover {
+        color: #fff;
+        background-color: #BEADFA;
+        border-color: #BEADFA
+    }
+
+::deep table {
+    min-width: 100%;
+}
+
+::deep th.book-title {
+    width: 14rem;
+}
+
+/* Subtle stripe effect */
+::deep tr:nth-child(even) {
+    background: rgba(255,255,255,0.4);
+}
+
+/* Don't collapse rows even if they are empty */
+::deep tbody tr {
+    height: 1.8rem;
+}

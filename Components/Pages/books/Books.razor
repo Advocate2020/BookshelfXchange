@@ -1,0 +1,80 @@
+﻿@page "/books"
+@using Microsoft.AspNetCore.Components.QuickGrid
+@rendermode InteractiveServer
+
+<PageTitle>Manage Books</PageTitle>
+
+<head>
+    <link href="styles/tableButtons.css" rel="stylesheet" />
+</head>
+
+@if (IsLoading)
+{
+    <p><em>Loading books...</em></p>
+
+}
+
+@if (!IsLoading && books == null)
+{
+    <p>No books found.</p>
+}
+
+@if (books != null)
+{
+    <div class="container p-3">
+        <div class="row">
+            <div class="col-12 d-flex justify-content-between align-items-baseline">
+                <h1>Books</h1>
+                <a href="/book/create" class="btn btn-update">Add book</a>
+            </div>
+        </div>
+        <hr />
+
+        <div>
+            <div class="row">
+                <div class="col-12 d-flex justify-content-between align-items-baseline">
+                    
+                        <label>
+                            Show
+                        <select @bind="@PaginationState.ItemsPerPage"  class="form-control form-control-sm">
+                            <option>5</option>
+                            <option>10</option>
+                            <option>20</option>
+                            <option>50</option>
+                            </select>
+                            entries
+                        </label>
+                    
+                    
+                        <label>
+                            Search:
+                            <input type="search" @bind="titleFilter" @bind:event="oninput" class="form-control form-control-sm">
+                        </label>
+                    
+                </div>
+                
+            </div>
+
+
+            <br />
+            <div class="grid">
+                <QuickGrid Items="@FilteredBookTitle" Pagination="@PaginationState" Class="table table-bordered table-striped">
+                    <PropertyColumn Property="@(b=> b.Title)" Sortable="true" Title="Book Title" Class="book-title"></PropertyColumn>
+                    <PropertyColumn Property="@(b=> b.Author)" Sortable="true"></PropertyColumn>
+                    <PropertyColumn Property="@(b=> b.CategoryName)" Sortable="true" Title="Category Name"></PropertyColumn>
+                    <TemplateColumn Title="Action">
+                        <button class="btn btn-update" @onclick="@(() => Edit(context))">Update</button>
+                        <button class="btn btn-delete" @onclick="@(() => Delete(context))">Delete</button>
+                    </TemplateColumn>
+                </QuickGrid>
+                <Paginator State="@PaginationState"></Paginator>
+            </div>
+        </div>
+    </div>
+
+}
+
+
+
+
+
