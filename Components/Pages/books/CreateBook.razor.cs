@@ -45,16 +45,13 @@ namespace BookshelfXchange.Components.Pages.books
             catch (Exception ex)
             {
                 // Log or handle the exception as needed
-                Console.WriteLine($"Error occurred while fetching categories: {ex.Message}");
+                toastService.ShowToast(ToastLevel.Error, $"Error occurred while fetching categories: {ex.Message}");
             }
         }
 
 
         private async Task Create()
         {
-            // You can perform additional validation here if needed
-
-
             try
             {
                 // Call service method to add the book
@@ -78,15 +75,11 @@ namespace BookshelfXchange.Components.Pages.books
             catch (Exception ex)
             {
                 // Log or handle the exception as needed
-                Console.WriteLine($"Error occurred while adding the book: {ex.Message}");
+                toastService.ShowToast(ToastLevel.Error, $"Error occurred while adding the book: {ex.Message}");
 
                 // Optionally, show an error message to the user
             }
 
-
         }
-
-
-
     }
 }

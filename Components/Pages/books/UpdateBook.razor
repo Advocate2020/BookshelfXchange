@@ -1,16 +1,15 @@
-﻿@page "/book/create"
+﻿@page "/book/edit/{BookId}"
 @rendermode InteractiveServer
 @using BookshelfXchange.ViewModels.GET
-
 @inject NavigationManager navigation
 @inject IToastService toastService
 
 
-<PageTitle>Add Book</PageTitle>
+<PageTitle>Edit Book</PageTitle>
 <head>
     <link href="styles/tableButtons.css" rel="stylesheet" />
     <link href="styles/formStyle.css" rel="stylesheet" />
-    
+
 </head>
 
 
@@ -25,46 +24,42 @@
 
 
 
-<EditForm method="post" Model="BookModel" FormName="addBook" OnValidSubmit="Create" class="col-md-6" style="margin-left: auto;
-  margin-right: auto;">
+<EditForm method="put" Model="_viewModel" FormName="updateBook" OnValidSubmit="Update" class="col-md-6" style="margin-left: auto; margin-right: auto;">
     <DataAnnotationsValidator />
     <ValidationSummary />
     <div class="form-group mb-3">
         <label for="title" class="form-label">Book title</label>
-        <InputText @bind-Value="BookModel.Title" id="title" class="form-control" />
-        <ValidationMessage For="() => BookModel.Title" class="text-danger" />
+        <InputText @bind-Value="_viewModel.Title" id="title" class="form-control"                         />
+        <ValidationMessage For="() => _viewModel.Title" class="text-danger" />
     </div>
     <div class="form-group mb-3">
         <label for="author" class="form-label">Book author</label>
-        <InputText @bind-Value="BookModel.Author" id="author" class="form-control" />
-        <ValidationMessage For="() => BookModel.Author" class="text-danger" />
+        <InputText @bind-Value="_viewModel.Author" id="author" class="form-control" />
+        <ValidationMessage For="() => _viewModel.Author" class="text-danger" />
     </div>
     <div class="form-group mb-3">
         <label for="category" class="form-label">Book category</label>
-        <InputSelect id="category" @bind-Value="BookModel.CategoryId" class="form-control form-select">
+        <InputSelect id="category" @bind-Value="_viewModel.CategoryId" class="form-control form-select">
             @if (BookCategories is null)
             {
                 <option selected value=""></option>
             }
             else
             {
-                <option selected value="">Select Category</option>
+                <option selected value="@_viewModel.CategoryId">@GetCatoryName(_viewModel.CategoryId)</option>
                 @foreach (var category in BookCategories)
                 {
                     <option value="@category.Id">@category.Name</option>
                 }
             }
         </InputSelect>
-        <ValidationMessage For="() => BookModel.CategoryId" class="text-danger" />
+        <ValidationMessage For="() => _viewModel.CategoryId" class="text-danger" />
     </div>
     <div class="form-group text-right">
         <button type="submit" class="btn btn-update">
-            Add
+            Update
         </button>
     </div>
 </EditForm>
-
-
-
 
 

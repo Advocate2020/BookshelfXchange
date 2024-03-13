@@ -1,7 +1,7 @@
 ﻿@page "/books"
 @using Microsoft.AspNetCore.Components.QuickGrid
 @rendermode InteractiveServer
-
+@inject IToastService toastService
 <PageTitle>Manage Books</PageTitle>
 
 <head>
@@ -16,7 +16,16 @@
 
 @if (!IsLoading && books == null)
 {
-    <p>No books found.</p>
+    <div class="container p-3">
+        <div class="row">
+            <div class="col-12 d-flex justify-content-between align-items-baseline">
+                <h1>Books</h1>
+                <a href="/book/create" class="btn btn-update">Add book</a>
+            </div>
+        </div>
+        <hr />
+             <p>No books found.</p>
+    </div>
 }
 
 @if (books != null)
@@ -29,8 +38,8 @@
             </div>
         </div>
         <hr />
-
-        <div>
+        <BlazoredToasts Position="ToastPosition.TopRight" Timeout="5" ShowProgressBar="true" IconType="IconType.FontAwesome" SuccessClass="success-toast-override" SuccessIcon="fa fa-thumbs-up" ErrorIcon="fa fa-bug" />
+        
             <div class="row">
                 <div class="col-12 d-flex justify-content-between align-items-baseline">
                     
@@ -57,19 +66,19 @@
 
 
             <br />
-            <div class="grid">
-                <QuickGrid Items="@FilteredBookTitle" Pagination="@PaginationState" Class="table table-bordered table-striped">
+        <div class="col-12 table-responsive-xl">
+            <QuickGrid Items="@FilteredBookTitle" Pagination="@PaginationState" Class="table table-bordered table-striped">
                     <PropertyColumn Property="@(b=> b.Title)" Sortable="true" Title="Book Title" Class="book-title"></PropertyColumn>
                     <PropertyColumn Property="@(b=> b.Author)" Sortable="true"></PropertyColumn>
                     <PropertyColumn Property="@(b=> b.CategoryName)" Sortable="true" Title="Category Name"></PropertyColumn>
                     <TemplateColumn Title="Action">
-                        <button class="btn btn-update" @onclick="@(() => Edit(context))">Update</button>
-                        <button class="btn btn-delete" @onclick="@(() => Delete(context))">Delete</button>
+                    <button class="btn btn-update" @onclick="@(() => Update(context))">Update</button>
+                    <button class="btn btn-delete" @onclick="@(() => Delete(context))">Delete</button>
                     </TemplateColumn>
                 </QuickGrid>
                 <Paginator State="@PaginationState"></Paginator>
             </div>
-        </div>
+       
     </div>
 
 }

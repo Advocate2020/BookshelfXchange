@@ -26,7 +26,7 @@ namespace BookshelfXchange.Repository
             }
         }
 
-        public async Task<TEntity> GetByIdAsync(int id, string endpoint)
+        public async Task<TEntity> GetByIdAsync(string id, string endpoint)
         {
             try
             {
@@ -55,13 +55,13 @@ namespace BookshelfXchange.Repository
             }
         }
 
-        public async Task<TEntity> UpdateAsync(int id, TEntity entity)
+        public async Task<bool> UpdateAsync(TEntity entity, string endpoint, string id)
         {
             try
             {
-                var response = await _httpClient.PutAsJsonAsync($"{_apiBaseUrl}/api/{typeof(TEntity).Name}/{id}", entity);
+                var response = await _httpClient.PutAsJsonAsync($"{_apiBaseUrl}/{endpoint}/{int.Parse(id)}", entity);
                 response.EnsureSuccessStatusCode();
-                return await response.Content.ReadFromJsonAsync<TEntity>();
+                return response.IsSuccessStatusCode;
             }
             catch (HttpRequestException ex)
             {
@@ -70,11 +70,12 @@ namespace BookshelfXchange.Repository
             }
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<bool> DeleteAsync(string endpoint, int id)
         {
             try
             {
-                var response = await _httpClient.DeleteAsync($"{_apiBaseUrl}/api/{typeof(TEntity).Name}/{id}");
+                var response = await _httpClient.DeleteAsync($"{_apiBaseUrl}/{endpoint}/{id}");
+                response.EnsureSuccessStatusCode();
                 return response.IsSuccessStatusCode;
             }
             catch (HttpRequestException ex)
