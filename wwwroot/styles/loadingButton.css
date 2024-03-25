@@ -1,0 +1,40 @@
+﻿.btn-process {
+    font-size: 1rem;
+    font-family: 'Montserrat', sans-serif;
+    background-color: indigo;
+    box-shadow: 0px 15px 27px 2px mediumpurple;
+    border: none;
+    outline: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem 3rem;
+    border-radius: 1rem;
+    color: #fff;
+    cursor: pointer;
+}
+
+
+
+    .btn-ring:after {
+        content: "";
+        display: block;
+        width: 25px;
+        height: 25px;
+        margin: 8px;
+        border-radius: 50%;
+        border: 3px solid #fff;
+        border-color: #fff transparent #fff transparent;
+        animation: ring 1.2s linear infinite;
+    }
+
+@keyframes ring {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}

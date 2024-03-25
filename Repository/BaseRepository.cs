@@ -1,6 +1,4 @@
-﻿using BookshelfXchange.Constants;
-
-namespace BookshelfXchange.Repository
+﻿namespace BookshelfXchange.Repository
 {
     public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : class
     {
@@ -10,7 +8,7 @@ namespace BookshelfXchange.Repository
         public BaseRepository(HttpClient httpClient)
         {
             _httpClient = httpClient;
-            _apiBaseUrl = ApiUrl.ApiBaseUrl;
+            _apiBaseUrl = Constants.Constants.ApiBaseUrl;
         }
 
         public async Task<List<TEntity>> GetAllAsync(string endpoint)
@@ -39,7 +37,7 @@ namespace BookshelfXchange.Repository
             }
         }
 
-        public async Task<bool> AddAsync(TEntity entity, string endpoint)
+        public async Task<bool> AddAsync(TEntity entity, string endpoint, string? token)
         {
             try
             {

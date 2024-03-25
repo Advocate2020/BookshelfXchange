@@ -1,0 +1,83 @@
+﻿@layout Layout.CenteredCardLayout
+@page "/sign-up"
+@rendermode InteractiveServer
+@inject NavigationManager navigation
+@inject IToastService toastService
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IJSRuntime JS
+
+<PageTitle>BXC | Sign up</PageTitle>
+
+<head>
+    <link href="styles/tableButtons.css" rel="stylesheet" />
+    <link href="styles/loadingButton.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .valid.modified:not([type=checkbox]) {
+            outline: 1px solid purple;
+        }
+    </style>
+</head>
+
+<BlazoredToasts Position="ToastPosition.TopRight" Timeout="15" ShowProgressBar="true" IconType="IconType.FontAwesome" SuccessClass="success-toast-override" SuccessIcon="fa fa-thumbs-up" ErrorIcon="fa fa-bug" />
+
+<EditForm Model="@User" FormName="AddUser" OnValidSubmit="RegisterUser" Enhance>
+    <DataAnnotationsValidator />    
+    
+    <div>
+        <h3 style="font-weight:bold; color:purple">BookshelfXChange Sign Up</h3>
+    </div>
+    <div>
+        <br />
+    </div>
+    <div class="col-12 row">        
+        <InputText @bind-Value="User.FirstName" id="firstname" class="form-control col-12" placeholder="first name..."/>
+        <ValidationMessage For="() => User.FirstName" class="text-danger text-left" />
+    </div>
+    <br />
+    <div class="col-12 row">
+        <InputText @bind-Value="User.LastName" id="lastname" class="form-control col-12" placeholder="last name..."/>
+        <ValidationMessage For="() => User.LastName" class="text-danger text-left" />
+    </div>
+    <br />
+    <div class="col-12 row">        
+        <InputText @bind-Value="User.Email" id="email" class="form-control col-12" placeholder="email..." />
+        <ValidationMessage For="@(() => User.Email)" class="text-danger text-left" />
+    </div>
+
+    <br />
+    <div class="col-12 row">        
+        <InputText @bind-Value="User.PhoneNumber" id="phone" type="phone" class="form-control col-12" placeholder="phone number..."/>
+        <ValidationMessage For="@(() => User.PhoneNumber)" class="text-danger text-left" />
+    </div>
+
+    <br />
+
+    <div class="col-12 row">        
+        <InputText type="password" class="form-control col-12" placeholder="Password..." @bind-Value="User.Password" />
+        <ValidationMessage For="@(() => User.Password)" class="text-danger text-left" />
+    </div>
+
+    <br />
+    <div class="col-12 row">        
+        <InputText type="password" class="form-control col-12" placeholder="Confirm Password..." @bind-Value="User.ConfirmPassword" />
+        <ValidationMessage For="@(() => User.ConfirmPassword)" class="text-danger text-left" />
+    </div>
+
+    <br />
+    <div class="col-12 row">
+        <span class="col-12"></span>
+        
+        <button type="submit" class="form-control col-6 btn btn-process" disabled="@isProcessing">
+            Sign up
+            @if (isProcessing)
+            {
+                <span class="btn-ring"></span>
+            }
+        </button>
+        <a href="/sign-in" class="col-6" style="color:mediumpurple">Already a user?</a>
+    </div>
+</EditForm>
+
+
+

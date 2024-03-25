@@ -1,7 +1,8 @@
 ﻿.btn-update {
     color: #fff;
     background-color: indigo;
-    border-color: indigo
+    border-color: indigo;
+    cursor: pointer;
 }
 
     .btn-update:hover {
@@ -21,6 +22,7 @@
         background-color: #BEADFA;
         border-color: #BEADFA
     }
+
 
 ::deep table {
     min-width: 100%;

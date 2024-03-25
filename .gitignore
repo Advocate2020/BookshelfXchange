@@ -56,3 +56,5 @@
 /.vs/BookshelfXchange/FileContentIndex/920c248d-9c46-4f0e-9cec-4b25972a0931.vsidx
 /.vs/BookshelfXchange/FileContentIndex/59096f66-f25e-4fb8-9a97-56b28d8460a0.vsidx
 *.vsidx
+.vs
+bin/Debug
