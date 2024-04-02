@@ -1,6 +1,6 @@
 ﻿@page "/books"
 @using Microsoft.AspNetCore.Components.QuickGrid
-@rendermode InteractiveServer
+
 @inject IToastService toastService
 
 <PageTitle>BXC | Manage Books</PageTitle>
@@ -10,91 +10,107 @@
     <link href="styles/page-loader.css" rel="stylesheet" />
 </head>
 
-@if (IsLoading)
-{
-    <div class="container p-3">
-        <div class="row">
-            <div class="col-12 d-flex justify-content-between align-items-baseline">
-                <h1>Books</h1>
-                <a href="/book/create" class="btn btn-update">Add book</a>
+<AuthorizeView>
+    <Authorized>
+        @if (IsLoading)
+        {
+            <div class="container p-3">
+                <div class="row">
+                    <div class="col-12 d-flex justify-content-between align-items-baseline">
+                        <h1>Books</h1>
+                        <a href="/book/create" class="btn btn-update">Add book</a>
+                    </div>
+                </div>
+                <hr />
+                <div class="spinner-container">
+                    <div class="spinner"></div>
+                </div>
             </div>
-        </div>
-        <hr />
-        <div class="spinner-container">
-            <div class="spinner"></div>
-        </div>
-    </div>
-}
+        }
 
-@if (!IsLoading && books == null)
-{
-    <div class="container p-3">
-        <div class="row">
-            <div class="col-12 d-flex justify-content-between align-items-baseline">
-                <h1>Books</h1>
-                <a href="/book/create" class="btn btn-update">Add book</a>
+        @if (!IsLoading && books == null)
+        {
+            <div class="container p-3">
+                <div class="row">
+                    <div class="col-12 d-flex justify-content-between align-items-baseline">
+                        <h1>Books</h1>
+                        <a href="/book/create" class="btn btn-update">Add book</a>
+                    </div>
+                </div>
+                <hr />
+                <p>No books found.</p>
             </div>
-        </div>
-        <hr />
-             <p>No books found.</p>
-    </div>
-}
+        }
 
-@if (books != null)
-{
-    <div class="container p-3">
-        <div class="row">
-            <div class="col-12 d-flex justify-content-between align-items-baseline">
-                <h1>Books</h1>
-                <a href="/book/create" class="btn btn-update">Add book</a>
+        @if (books != null)
+        {
+            <div class="container p-3">
+                <div class="row">
+                    <div class="col-12 d-flex justify-content-between align-items-baseline">
+                        <h1>Books</h1>
+                        <a href="/book/create" class="btn btn-update">Add book</a>
+                    </div>
+                </div>
+
+                <hr />
+
+                <BlazoredToasts Position="ToastPosition.TopRight" Timeout="5" ShowProgressBar="true" IconType="IconType.FontAwesome" SuccessClass="success-toast-override" SuccessIcon="fa fa-thumbs-up" ErrorIcon="fa fa-bug" />
+
+                <div class="row">
+                    <div class="col-12 d-flex justify-content-between align-items-baseline">
+
+                        <label>
+                            Show
+                            <select @bind="@PaginationState.ItemsPerPage" class="form-control form-control-sm">
+                                <option>5</option>
+                                <option>10</option>
+                                <option>20</option>
+                                <option>50</option>
+                            </select>
+                            entries
+                        </label>
+
+
+                        <label>
+                            Search:
+                            <input type="search" @bind="titleFilter" @bind:event="oninput" class="form-control form-control-sm">
+                        </label>
+
+                    </div>
+
+                </div>
+
+                <br />
+
+                <div class="col-12 table-responsive-xl">
+                    <QuickGrid Items="@FilteredBookTitle" Pagination="@PaginationState" Class="table table-bordered table-striped">
+                        <PropertyColumn Property="@(b=> b.Title)" Sortable="true" Title="Book Title" Class="book-title"></PropertyColumn>
+                        <PropertyColumn Property="@(b=> b.Author)" Sortable="true"></PropertyColumn>
+                        <PropertyColumn Property="@(b=> b.CategoryName)" Sortable="true" Title="Category Name"></PropertyColumn>
+                        <TemplateColumn Title="Action" Context="BookContext">
+                            
+                            <button class="btn btn-update" @onclick="@(() => Update(BookContext.Id))">Update</button>
+                            <button class="btn btn-delete" @onclick="@(() => Delete(BookContext.Id))">Delete</button>
+                        </TemplateColumn>
+                    </QuickGrid>
+                    <Paginator State="@PaginationState"></Paginator>
+                </div>
             </div>
-        </div>
 
-        <hr />
+        }
+    </Authorized>
+    <NotAuthorized>
+        @{
+            var returnUrl =
+            NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
 
-        <BlazoredToasts Position="ToastPosition.TopRight" Timeout="5" ShowProgressBar="true" IconType="IconType.FontAwesome" SuccessClass="success-toast-override" SuccessIcon="fa fa-thumbs-up" ErrorIcon="fa fa-bug" />
-        
-        <div class="row">
-            <div class="col-12 d-flex justify-content-between align-items-baseline">
-                    
-                    <label>
-                        Show
-                    <select @bind="@PaginationState.ItemsPerPage"  class="form-control form-control-sm">
-                        <option>5</option>
-                        <option>10</option>
-                        <option>20</option>
-                        <option>50</option>
-                        </select>
-                        entries
-                    </label>
-                    
-                    
-                    <label>
-                        Search:
-                        <input type="search" @bind="titleFilter" @bind:event="oninput" class="form-control form-control-sm">
-                    </label>
-                    
-            </div>
-                
-        </div>
+            <LoginRedirect ReturnUrl="@returnUrl" />
+        }
 
-        <br />
+    </NotAuthorized>
+</AuthorizeView>
 
-        <div class="col-12 table-responsive-xl">
-            <QuickGrid Items="@FilteredBookTitle" Pagination="@PaginationState" Class="table table-bordered table-striped">
-                    <PropertyColumn Property="@(b=> b.Title)" Sortable="true" Title="Book Title" Class="book-title"></PropertyColumn>
-                    <PropertyColumn Property="@(b=> b.Author)" Sortable="true"></PropertyColumn>
-                    <PropertyColumn Property="@(b=> b.CategoryName)" Sortable="true" Title="Category Name"></PropertyColumn>
-                    <TemplateColumn Title="Action">
-                    <button class="btn btn-update" @onclick="@(() => Update(context))">Update</button>
-                    <button class="btn btn-delete" @onclick="@(() => Delete(context))">Delete</button>
-                    </TemplateColumn>
-            </QuickGrid>
-            <Paginator State="@PaginationState"></Paginator>
-        </div>       
-    </div>
 
-}
 
 
 

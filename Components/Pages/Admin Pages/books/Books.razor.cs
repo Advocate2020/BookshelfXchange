@@ -53,13 +53,14 @@ namespace BookshelfXchange.Components.Pages.Admin_Pages.books
             {
                 IsLoading = true;
 
-                await Task.Delay(5000);
+
 
                 PaginationState = new PaginationState { ItemsPerPage = 5 };
 
                 books = await GetBookRepository.GetAllAsync("api/Book");
 
                 bookItems = books.AsQueryable();
+
                 IsLoading = false;
 
             }
@@ -70,16 +71,16 @@ namespace BookshelfXchange.Components.Pages.Admin_Pages.books
 
         }
 
-        void Update(GetBookViewModel viewModel)
+        void Update(int Id)
         {
-            NavigationManager.NavigateTo($"/book/edit/{viewModel.Id}");
+            NavigationManager.NavigateTo($"/book/edit/{Id}");
         }
-        private async Task Delete(GetBookViewModel viewModel)
+        private async Task Delete(int Id)
         {
             try
             {
                 // Call service method to add the book
-                Success = await GetBookRepository.DeleteAsync("api/Book", viewModel.Id);
+                Success = await GetBookRepository.DeleteAsync("api/Book", Id);
 
 
                 if (Success)

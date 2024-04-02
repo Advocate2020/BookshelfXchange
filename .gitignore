@@ -58,3 +58,4 @@
 *.vsidx
 .vs
 bin/Debug
+obj

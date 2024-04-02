@@ -1,9 +1,12 @@
 ﻿@layout Layout.CenteredCardLayout
 @page "/sign-in"
+@using Microsoft.AspNetCore.Authorization
 
+@attribute [AllowAnonymous]
+@rendermode InteractiveServer
 @inject NavigationManager navigation
 @inject IToastService toastService
-@inject IHttpContextAccessor HttpContextAccessor
+
 
 <PageTitle>BXC | Sign In</PageTitle>
 
@@ -21,7 +24,7 @@
     <BlazoredToasts Position="ToastPosition.TopRight" Timeout="15" ShowProgressBar="true" IconType="IconType.FontAwesome" SuccessClass="success-toast-override" SuccessIcon="fa fa-thumbs-up" ErrorIcon="fa fa-bug" ErrorClass="err"/>
 
     <div>
-        <EditForm Model="@Login" FormName="loginUser" OnValidSubmit="LoginUser">
+        <EditForm Model="@Login" FormName="loginUser" OnValidSubmit="LoginUser" Enhance>
             <DataAnnotationsValidator />
             
             <div>

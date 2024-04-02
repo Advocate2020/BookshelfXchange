@@ -1,3 +1,4 @@
+using Blazored.LocalStorage;
 using Blazored.Toast;
 using Blazorise;
 using Blazorise.Bootstrap;
@@ -5,11 +6,15 @@ using Blazorise.Icons.FontAwesome;
 using BookshelfXchange.Components;
 using BookshelfXchange.Constants;
 using BookshelfXchange.Maps;
+using BookshelfXchange.Middleware;
 using BookshelfXchange.Repository;
+using BookshelfXchange.Services;
 using Firebase.Auth;
 using Firebase.Auth.Providers;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Components.Authorization;
 
 
 
@@ -17,12 +22,19 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
+builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddBlazoredToast();
-
-
+// Add Blazored LocalStorage
+builder.Services.AddBlazoredLocalStorage();
+// Register your custom AuthenticationStateProvider
+builder.Services.AddScoped<CustomAuthenticationStateProvider>();
+builder.Services.AddScoped<AuthenticationStateProvider>(provider => provider.GetService<CustomAuthenticationStateProvider>());
 // Configure HttpClient
 builder.Services.AddAutoMapper(typeof(MapperInitializer));
 builder.Services.AddScoped<Constants>();
+
+builder.Services.AddScoped<ICookie, Cookie>();
+
 // Register FirebaseAuthClient
 var config = builder.Configuration;
 var apiKey = config["Firebase:ApiKey"];
@@ -47,20 +59,19 @@ builder.Services.AddSingleton(firebaseAuth);
 // Register FirebaseAuthService
 builder.Services.AddTransient<FirebaseAuthService>();
 builder.Services.AddScoped<HttpClient>(sp => new HttpClient { BaseAddress = new Uri(Constants.ApiBaseUrl) });
-builder.Services.AddDistributedMemoryCache();
-builder.Services.AddSession();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.Cookie.Name = "devAuth";
+        options.Cookie.MaxAge = TimeSpan.FromMinutes(30);
+        options.AccessDeniedPath = "/access-denied";
+        options.LoginPath = "/sign-in";
 
+    });
 
-var cookieName = ".MySessionCookie";
-builder.Services.AddAuthentication(cookieName).AddCookie(cookieName, options =>
-{
-    options.Cookie.Name = cookieName;
-    options.LoginPath = "/sign-in";
-    options.AccessDeniedPath = "/not-found";
-    options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
-    options.SlidingExpiration = true;
-});
+builder.Services.AddAuthorization();
+
 //Configure Firebase
 #region Firebase Secrets
 
@@ -99,11 +110,12 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseSession();
-app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAntiforgery();
+app.UseHttpsRedirection();
 
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 

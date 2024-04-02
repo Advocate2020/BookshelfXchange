@@ -1,13 +1,15 @@
 ﻿using Blazored.Toast.Services;
-using BookshelfXchange.Models;
+using BookshelfXchange.Middleware;
 using BookshelfXchange.Repository;
 using BookshelfXchange.Services;
 using BookshelfXchange.ViewModels.POST;
 using FirebaseAdmin.Auth;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+
+
 namespace BookshelfXchange.Components.Pages.Auth
 {
     public partial class SignIn
@@ -15,8 +17,7 @@ namespace BookshelfXchange.Components.Pages.Auth
         [SupplyParameterFromForm]
         private LoginViewModel Login { get; set; } = new();
 
-        [Inject]
-        private IBaseRepository<LoginViewModel> LoginRepository { get; set; }
+
 
         [Inject]
         NavigationManager NavigationManager { get; set; }
@@ -24,7 +25,19 @@ namespace BookshelfXchange.Components.Pages.Auth
         [Inject]
         FirebaseAuthService AuthService { get; set; }
 
+        [Inject]
+        private ICookie CookieService { get; set; }
+
         private bool isProcessing = false;
+
+        [CascadingParameter]
+        public Task<AuthenticationState> AuthenticationStateTask { get; set; }
+
+        [Inject]
+        public CustomAuthenticationStateProvider AuthenticationStateProvider { get; set; }
+
+        [Inject]
+        private HttpClient httpClient { get; set; }
 
         private async Task LoginUser()
         {
@@ -42,6 +55,13 @@ namespace BookshelfXchange.Components.Pages.Auth
                     // Get the user's token
                     var token = await user.GetIdTokenAsync();
 
+                    // Set cookies
+                    await CookieService.SetValue("Email", Login.Email);
+                    await CookieService.SetValue("FirebaseToken", token);
+
+                    // Add token to request headers
+                    //httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
                     var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
 
                     List<string> roles = jwt.Claims
@@ -49,47 +69,37 @@ namespace BookshelfXchange.Components.Pages.Auth
                         .Select(c => c.Value)
                         .ToList();
 
-                    var isGeneralUser = roles.Contains(RoleTypes.USER.Name);
-                    var isAdmin = roles.Contains(RoleTypes.ADMIN.Name);
-
-                    if (!isAdmin && !isGeneralUser)
-                    {
-                        isProcessing = false;
-                        toastService.ShowToast(ToastLevel.Error, "You are unauthorized.");
-
-
-                    }
-
-                    var x = new ClaimsIdentity(jwt.Claims, ".MySessionCookie");
+                    var x = new ClaimsIdentity(jwt.Claims, "FirebaseToken");
                     ClaimsPrincipal claimsPrincipal = new(x);
-                    var httpContext = HttpContextAccessor.HttpContext;
-                    await httpContext.SignInAsync(".MySessionCookie", claimsPrincipal);
 
-                    StateHandler.SetUserState(httpContext, token);
-
+                    // Notify authentication state
+                    AuthenticationStateProvider.SetAuthenticationState(claimsPrincipal);
+                    var authState = await AuthenticationStateTask;
                     isProcessing = false;
 
-                    if (isAdmin)
-                    {
+                    // Show success message
+                    toastService.ShowToast(ToastLevel.Success, "Successfully logged in.");
 
-                        // Redirect to the desired page
-                        NavigationManager.NavigateTo("/admin");
-                        return;
-                    }
-                    else if (isGeneralUser)
+                    // Reset the User object
+                    Login = new LoginViewModel();
+
+                    string url = GetQueryParm("returnUrl");
+
+                    if (string.IsNullOrEmpty(url))
                     {
                         // Redirect to the desired page
-                        //NavigationManager.NavigateTo("/admin");
-                        // Show success message
-                        toastService.ShowToast(ToastLevel.Success, "Successfully logged in.");
+                        NavigationManager.NavigateTo("/admin", true);
+                    }
+                    else
+                    {
+                        NavigationManager.NavigateTo($"{url}");
                     }
 
                 }
                 else
                 {
                     isProcessing = false;
-                    // Handle unsuccessful login
-                    throw new Exception("Failed to log in. Invalid credentials.");
+                    throw new Exception("Failed to create user.");
                 }
             }
             catch (FirebaseAuthException ex)
@@ -108,6 +118,22 @@ namespace BookshelfXchange.Components.Pages.Auth
                 toastService.ShowToast(ToastLevel.Error, $"Error occurred while logging in: {ex.Message}");
             }
         }
+
+        string GetQueryParm(string parmName)
+        {
+            var uriBuilder = new UriBuilder(NavigationManager.Uri);
+            var q = System.Web.HttpUtility.ParseQueryString(uriBuilder.Query);
+            var returnUrl = q[parmName] ?? "";
+
+            // Remove the ~/
+            if (returnUrl.StartsWith("~/"))
+            {
+                returnUrl = returnUrl.Substring(2);
+            }
+
+            return returnUrl;
+        }
+
 
     }
 }

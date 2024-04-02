@@ -9,18 +9,67 @@
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="flex-column">
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
+            <AuthorizeView Roles="User">
+                <Authorized>
+                    <NavLink class="nav-link" href="admin">
+                        <span class="bi bi-house-door-fill fs-4" aria-hidden="true"></span> Home
+                    </NavLink>
+                </Authorized>
+            </AuthorizeView>            
         </div>
 
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="books">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Book
+                <span class="bi bi-book-fill fs-4" aria-hidden="true"></span> Book
             </NavLink>
         </div>
 
+        <div class="nav-item px-3">
+            
+                <AuthorizeView>
+                    <NotAuthorized>
+                        <NavLink class="nav-link" href="/sign-in">
+                        <span class="bi bi-box-arrow-left fs-4" aria-hidden="true"></span> Sign In
+                        </NavLink>
+                    </NotAuthorized>
+                    <Authorized>
+                        <NavLink class="nav-link" href="@Logout()">
+                        <span class="bi bi-box-arrow-right fs-4" aria-hidden="true"></span> Sign Out
+                        </NavLink>
+                    </Authorized>
+                </AuthorizeView>                
+            
+        </div>
        
     </nav>
 </div>
+
+@code{
+    @using BookshelfXchange.Services;
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; }
+
+    [Inject]
+    private ICookie CookieService { get; set; }
+
+    // Method to perform the sign-out operation
+    private async Task Logout()
+    {
+        try
+        {
+            // Clear cookies
+            await CookieService.DeleteCookie("Email");
+            await CookieService.DeleteCookie("FirebaseToken");
+
+            // Redirect to the desired page
+            NavigationManager.NavigateTo("/"); // Redirect to the home page or another appropriate page
+        }
+        catch (Exception ex)
+        {
+            // Log or handle exceptions as needed
+            Console.WriteLine($"Error occurred while signing out: {ex.Message}");
+        }
+    }
+}
 

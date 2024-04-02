@@ -27,6 +27,9 @@ namespace BookshelfXchange.Components.Pages.Auth
         [Inject]
         FirebaseAuthService AuthService { get; set; }
 
+        [Inject]
+        private ICookie CookieService { get; set; }
+
         private bool isProcessing = false;
 
         private async Task RegisterUser()
@@ -62,8 +65,9 @@ namespace BookshelfXchange.Components.Pages.Auth
                     // Check if the request was successful
                     if (response.IsSuccessStatusCode)
                     {
-                        HttpContextAccessor.HttpContext.Session.SetString("Email", User.Email);
-                        HttpContextAccessor.HttpContext.Session.SetString("FirebaseToken", token);
+                        // Set cookies
+                        await CookieService.SetValue("Email", User.Email);
+                        await CookieService.SetValue("FirebaseToken", token);
 
                         // Store user data in localStorage
                         await JS.InvokeVoidAsync("localStorage.setItem", "email", User.Email);

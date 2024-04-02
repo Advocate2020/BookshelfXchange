@@ -1,0 +1,13 @@
+﻿@inject NavigationManager UriHelper
+@code {
+    [Parameter]
+    public string ReturnUrl { get; set; }
+
+    protected override async Task OnInitializedAsync()
+
+    {
+        ReturnUrl = "~/" + ReturnUrl;
+        UriHelper.NavigateTo($"sign-in?returnUrl={ReturnUrl}",
+           forceLoad: true);
+    }
+}
