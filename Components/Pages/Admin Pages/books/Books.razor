@@ -1,6 +1,6 @@
 ﻿@page "/books"
 @using Microsoft.AspNetCore.Components.QuickGrid
-
+@rendermode InteractiveServer
 @inject IToastService toastService
 
 <PageTitle>BXC | Manage Books</PageTitle>
@@ -10,7 +10,7 @@
     <link href="styles/page-loader.css" rel="stylesheet" />
 </head>
 
-<AuthorizeView>
+<AuthorizeView Context="authContext">
     <Authorized>
         @if (IsLoading)
         {
@@ -87,10 +87,10 @@
                         <PropertyColumn Property="@(b=> b.Title)" Sortable="true" Title="Book Title" Class="book-title"></PropertyColumn>
                         <PropertyColumn Property="@(b=> b.Author)" Sortable="true"></PropertyColumn>
                         <PropertyColumn Property="@(b=> b.CategoryName)" Sortable="true" Title="Category Name"></PropertyColumn>
-                        <TemplateColumn Title="Action" Context="BookContext">
+                        <TemplateColumn Title="Action">
                             
-                            <button class="btn btn-update" @onclick="@(() => Update(BookContext.Id))">Update</button>
-                            <button class="btn btn-delete" @onclick="@(() => Delete(BookContext.Id))">Delete</button>
+                            <button class="btn btn-update" @onclick="@(() => Update(context))">Update</button>
+                            <button class="btn btn-delete" @onclick="@(() => Delete(context))">Delete</button>
                         </TemplateColumn>
                     </QuickGrid>
                     <Paginator State="@PaginationState"></Paginator>

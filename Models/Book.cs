@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 
-namespace BookshelfXchange.Models
+namespace BookShelfXChange.Models
 {
 
     public class Book

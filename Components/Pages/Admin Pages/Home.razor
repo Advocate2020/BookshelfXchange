@@ -1,11 +1,11 @@
 ﻿@page "/admin"
-@using BookshelfXchange.Middleware
+
 @inject NavigationManager NavigationManager
 <PageTitle>BXC | Admin Dashboard</PageTitle>
 
 
-    
-<AuthorizeView>
+
+<AuthorizeView Roles="Admin">
     <Authorized>
         <h1>Hello, world!</h1>
 
@@ -18,9 +18,9 @@
 
             <LoginRedirect ReturnUrl="@returnUrl" />
         }
-        
+
     </NotAuthorized>
-</AuthorizeView>    
+</AuthorizeView>
 
 
 

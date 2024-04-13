@@ -1,11 +1,11 @@
 using AutoMapper;
 using Blazored.Toast.Services;
-using BookshelfXchange.Repository;
 using BookshelfXchange.ViewModels.GET;
 using BookshelfXchange.ViewModels.Update;
+using BookShelfXChange.Repository;
 using Microsoft.AspNetCore.Components;
 
-namespace BookshelfXchange.Components.Pages.Admin_Pages.books
+namespace BookShelfXChange.Components.Pages.Admin_Pages.books
 {
     public partial class UpdateBook
     {

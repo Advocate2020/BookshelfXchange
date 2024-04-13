@@ -1,6 +1,6 @@
 ﻿using FirebaseAdmin.Auth;
 
-namespace BookshelfXchange.Services
+namespace BookShelfXChange.Services
 {
     public static class FirebaseAuthExceptionHandler
     {

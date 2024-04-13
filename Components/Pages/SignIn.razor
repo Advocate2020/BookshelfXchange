@@ -1,11 +1,17 @@
-﻿@layout Layout.CenteredCardLayout
-@page "/sign-in"
+﻿@using BookShelfXChange.Components.Account
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@inject NavigationManager RedirectManager
+@layout Layout.CenteredCardLayout
+@page "/sign-in"
 
-@attribute [AllowAnonymous]
-@rendermode InteractiveServer
-@inject NavigationManager navigation
+
+
+@inject NavigationManager NavigationManager
 @inject IToastService toastService
+
+@using Blazored.Toast.Configuration;
+@using Blazored.Toast.Services;
 
 
 <PageTitle>BXC | Sign In</PageTitle>
@@ -19,14 +25,19 @@
             outline: 1px solid purple;
         }
     </style>
+    <script>
+        // navigation.js
+        function navigateToPage(url) {
+            window.location.href = url;
+        }
+    </script>
 </head>
 <div class="container p-3">
     <BlazoredToasts Position="ToastPosition.TopRight" Timeout="15" ShowProgressBar="true" IconType="IconType.FontAwesome" SuccessClass="success-toast-override" SuccessIcon="fa fa-thumbs-up" ErrorIcon="fa fa-bug" ErrorClass="err"/>
 
     <div>
-        <EditForm Model="@Login" FormName="loginUser" OnValidSubmit="LoginUser" Enhance>
-            <DataAnnotationsValidator />
-            
+        <EditForm Model="@Login" FormName="loginUser" OnValidSubmit="LoginUser">
+            <DataAnnotationsValidator />            
             <div>
                 <h3 style="font-weight:bold; color:purple">BookshelfXChange Sign In</h3>
             </div>
@@ -53,6 +64,7 @@
                         <span class="btn-ring"></span>
                     }
                 </button>
+                
                 <a href="/sign-up" class="col-6" style="color:mediumpurple">Dont have an account?</a>
             </div>
         </EditForm>

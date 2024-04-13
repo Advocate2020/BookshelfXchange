@@ -1,39 +1,74 @@
-using Blazored.LocalStorage;
 using Blazored.Toast;
 using Blazorise;
 using Blazorise.Bootstrap;
 using Blazorise.Icons.FontAwesome;
-using BookshelfXchange.Components;
-using BookshelfXchange.Constants;
 using BookshelfXchange.Maps;
-using BookshelfXchange.Middleware;
-using BookshelfXchange.Repository;
-using BookshelfXchange.Services;
+using BookShelfXChange.Components;
+using BookShelfXChange.Components.Account;
+using BookShelfXChange.Constants;
+using BookShelfXChange.Data;
+using BookShelfXChange.Repository;
+using BookShelfXChange.Services;
 using Firebase.Auth;
 using Firebase.Auth.Providers;
-using FirebaseAdmin;
-using Google.Apis.Auth.OAuth2;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Components.Authorization;
-
-
+using Microsoft.AspNetCore.Components.Server;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddRazorComponents().AddInteractiveServerComponents();
-builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddRazorComponents().AddInteractiveServerComponents().AddHubOptions(opt =>
+{
+    opt.DisableImplicitFromServicesParameters = true;
+});
+builder.Services.AddMudServices();
+
+builder.Services.AddHttpClient("https://localhost:7040", client =>
+{
+    // Configure the default request timeout (e.g., 30 seconds)
+    client.Timeout = TimeSpan.FromSeconds(180);
+});
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddBlazoredToast();
-// Add Blazored LocalStorage
-builder.Services.AddBlazoredLocalStorage();
-// Register your custom AuthenticationStateProvider
-builder.Services.AddScoped<CustomAuthenticationStateProvider>();
-builder.Services.AddScoped<AuthenticationStateProvider>(provider => provider.GetService<CustomAuthenticationStateProvider>());
-// Configure HttpClient
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddScoped<IdentityUserAccessor>();
+builder.Services.AddScoped<IdentityRedirectManager>();
+builder.Services.AddScoped<AuthenticationStateProvider, ServerAuthenticationStateProvider>();
+
+builder.Services.AddAuthorization();
+builder.Services.AddAuthentication("devAuth").AddCookie("devAuth", options =>
+{
+    options.Cookie.Name = "devAuth";
+    options.LoginPath = "/sign-in";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
+    options.SlidingExpiration = true;
+});
+
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(connectionString));
+builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
+builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddSignInManager()
+    .AddDefaultTokenProviders();
+
+builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+
+builder.Services
+    .AddBlazorise(options =>
+    {
+        options.Immediate = true;
+    })
+    .AddBootstrapProviders()
+    .AddFontAwesomeIcons();
 builder.Services.AddAutoMapper(typeof(MapperInitializer));
 builder.Services.AddScoped<Constants>();
-
-builder.Services.AddScoped<ICookie, Cookie>();
 
 // Register FirebaseAuthClient
 var config = builder.Configuration;
@@ -56,67 +91,39 @@ var firebaseAuth = new FirebaseAuthClient(firebaseConfig);
 // Register FirebaseAuthClient as a service
 builder.Services.AddSingleton(firebaseAuth);
 
+builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(Constants.ApiBaseUrl) });
+builder.Services.AddTransient(typeof(IBaseRepository<>), typeof(BaseRepository<>));
 // Register FirebaseAuthService
 builder.Services.AddTransient<FirebaseAuthService>();
-builder.Services.AddScoped<HttpClient>(sp => new HttpClient { BaseAddress = new Uri(Constants.ApiBaseUrl) });
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
-    {
-        options.Cookie.Name = "devAuth";
-        options.Cookie.MaxAge = TimeSpan.FromMinutes(30);
-        options.AccessDeniedPath = "/access-denied";
-        options.LoginPath = "/sign-in";
-
-    });
-
-builder.Services.AddAuthorization();
-
-//Configure Firebase
-#region Firebase Secrets
-
-try
-{
-
-    FirebaseApp.Create(new AppOptions
-    {
-        Credential = GoogleCredential.FromFile(Constants.FirebaseSecret)
-    });
-}
-catch (Exception e)
-{
-    Console.WriteLine($"# Firebase setup failed : {e.Message}");
-    throw;
-}
-#endregion
-// Specify API base URL
-builder.Services
-    .AddBlazorise(options =>
-    {
-        options.Immediate = true;
-    })
-    .AddBootstrapProviders()
-    .AddFontAwesomeIcons();
-builder.Services.AddTransient(typeof(IBaseRepository<>), typeof(BaseRepository<>));
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
+{
+    app.UseMigrationsEndPoint();
+}
+else
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days.
-    // You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
-app.UseStaticFiles();
-app.UseAntiforgery();
-app.UseHttpsRedirection();
+
+
 
 app.UseAuthentication();
+app.UseAntiforgery();
 app.UseAuthorization();
 
+app.UseStaticFiles();
+
+app.UseHttpsRedirection();
+
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
+
+// Add additional endpoints required by the Identity /Account Razor components.
+app.MapAdditionalIdentityEndpoints();
 
 app.Run();

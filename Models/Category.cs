@@ -1,4 +1,4 @@
-﻿namespace BookshelfXchange.Models
+﻿namespace BookShelfXChange.Models
 {
     public class Category
     {

@@ -1,6 +1,6 @@
 ﻿using Microsoft.JSInterop;
 
-namespace BookshelfXchange.Services
+namespace BookShelfXChange.Services
 {
     public interface ICookie
     {
@@ -27,7 +27,7 @@ namespace BookshelfXchange.Services
 
         public async Task SetValue(string key, string value, int? days = null)
         {
-            var curExp = (days != null) ? (days > 0 ? DateToUTC(days.Value) : "") : expires;
+            var curExp = days != null ? days > 0 ? DateToUTC(days.Value) : "" : expires;
             await SetCookie($"{key}={value}; expires={curExp}; path=/");
         }
 

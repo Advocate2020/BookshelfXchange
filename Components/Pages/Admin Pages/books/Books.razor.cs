@@ -1,11 +1,11 @@
 using Blazored.Toast.Services;
-using BookshelfXchange.Repository;
 using BookshelfXchange.ViewModels.GET;
+using BookShelfXChange.Repository;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.QuickGrid;
 
 
-namespace BookshelfXchange.Components.Pages.Admin_Pages.books
+namespace BookShelfXChange.Components.Pages.Admin_Pages.books
 {
     public partial class Books
     {
@@ -71,16 +71,16 @@ namespace BookshelfXchange.Components.Pages.Admin_Pages.books
 
         }
 
-        void Update(int Id)
+        void Update(GetBookViewModel vm)
         {
-            NavigationManager.NavigateTo($"/book/edit/{Id}");
+            NavigationManager.NavigateTo($"/book/edit/{vm.Id}");
         }
-        private async Task Delete(int Id)
+        private async Task Delete(GetBookViewModel vm)
         {
             try
             {
                 // Call service method to add the book
-                Success = await GetBookRepository.DeleteAsync("api/Book", Id);
+                Success = await GetBookRepository.DeleteAsync("api/Book", vm.Id);
 
 
                 if (Success)

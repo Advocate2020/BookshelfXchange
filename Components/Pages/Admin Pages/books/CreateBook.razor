@@ -1,75 +1,168 @@
 ﻿@page "/book/create"
 @rendermode InteractiveServer
 @using BookshelfXchange.ViewModels.GET
-
+@inject IConfiguration config
 @inject NavigationManager navigation
 @inject IToastService toastService
+@inject IJSRuntime JSRuntime
 
+@using MudBlazor
 
 <PageTitle>BXC | Create Book</PageTitle>
+
+
+
 <head>
     <link href="styles/tableButtons.css" rel="stylesheet" />
     <link href="styles/formStyle.css" rel="stylesheet" />
     <link href="styles/loadingButton.css" rel="stylesheet" />
+    <link href="styles/file-upload.css" rel="stylesheet" />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        #img-preview {
+            display: inline-block;
+            width: 155px;
+            border: 2px dashed #333;
+            margin-right: 20px; /* Add margin to create space between images */
+        }
 
-    
+            #img-preview img {
+                width: 100%;
+                height: auto;
+                display: block;
+            }
+    </style>
+
+
 </head>
 
+<AuthorizeView Context="authContext" Roles="Admin">
+    <Authorized>
+        <div class="row">
+            <div class="col-12">
+                <h1>Book Details</h1>
+            </div>
+        </div>
+        <hr>
+        <BlazoredToasts Position="ToastPosition.TopRight" Timeout="5" ShowProgressBar="true" IconType="IconType.FontAwesome" SuccessClass="success-toast-override" SuccessIcon="fa fa-thumbs-up" ErrorIcon="fa fa-bug" />
 
-
-<div class="row">
-    <div class="col-12">
-        <h1>Book Details</h1>
-    </div>
-</div>
-<hr>
-<BlazoredToasts Position="ToastPosition.TopRight" Timeout="5" ShowProgressBar="true" IconType="IconType.FontAwesome" SuccessClass="success-toast-override" SuccessIcon="fa fa-thumbs-up" ErrorIcon="fa fa-bug" />
-
-
-
-<EditForm method="post" Model="BookModel" FormName="addBook" OnValidSubmit="Create" class="col-md-6" style="margin-left: auto;
-  margin-right: auto;">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
-    <div class="form-group mb-3">
-        <label for="title" class="form-label">Book title</label>
-        <InputText @bind-Value="BookModel.Title" id="title" class="form-control" />
-        <ValidationMessage For="() => BookModel.Title" class="text-danger" />
-    </div>
-    <div class="form-group mb-3">
-        <label for="author" class="form-label">Book author</label>
-        <InputText @bind-Value="BookModel.Author" id="author" class="form-control" />
-        <ValidationMessage For="() => BookModel.Author" class="text-danger" />
-    </div>
-    <div class="form-group mb-3">
-        <label for="category" class="form-label">Book category</label>
-        <InputSelect id="category" @bind-Value="BookModel.CategoryId" class="form-control form-select">
-            @if (BookCategories is null)
-            {
-                <option selected value=""></option>
-            }
-            else
-            {
-                <option selected value="">Select Category</option>
-                @foreach (var category in BookCategories)
+        @if (errors.Count > 0)
+        {
+            <ul>
+                @foreach (var error in errors)
                 {
-                    <option value="@category.Id">@category.Name</option>
+                    <li>
+                        @error
+                    </li>
                 }
-            }
-        </InputSelect>
-        <ValidationMessage For="() => BookModel.CategoryId" class="text-danger" />
-    </div>
-    <div class="form-group text-right">
-        <button type="submit" class="btn-process" disabled="@isProcessing">
-            Add
-            @if (isProcessing)
+
+            </ul>
+        }
+
+        <EditForm method="post" Model="BookModel" FormName="addBook" OnValidSubmit="Create" class="col-md-6" style="margin-left: auto; margin-right: auto;">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="form-group mb-3">
+                <label for="title" class="form-label">Book title</label>
+                <InputText @bind-Value="BookModel.Title" id="title" class="form-control" />
+                <ValidationMessage For="() => BookModel.Title" class="text-danger" />
+            </div>
+            <div class="form-group mb-3">
+                <label for="author" class="form-label">Book author</label>
+                <InputText @bind-Value="BookModel.Author" id="author" class="form-control" />
+                <ValidationMessage For="() => BookModel.Author" class="text-danger" />
+            </div>
+            <div class="form-group mb-3">
+                <label for="category" class="form-label">Book category</label>
+                <InputSelect id="category" @bind-Value="BookModel.CategoryId" class="form-control form-select">
+                    @if (BookCategories is null)
+                    {
+                        <option selected value=""></option>
+                    }
+                    else
+                    {
+                        <option selected value="">Select Category</option>
+                        @foreach (var category in BookCategories)
+                        {
+                            <option value="@category.Id">@category.Name</option>
+                        }
+                    }
+                </InputSelect>
+                <ValidationMessage For="() => BookModel.CategoryId" class="text-danger" />
+            </div>
+            <!-- InputSelect element remains the same -->
+
+            <div class="form-group mb-3">
+                <label for="profilePicture">Upload Pictures:</label>
+                <MudStack Style="width: 100%">
+                    <MudFileUpload T="IReadOnlyList<IBrowserFile>"
+                                   AppendMultipleFiles
+                                   OnFilesChanged="HandleFileSelection"
+                                   @bind-Value="BookModel.BookImages"
+                                   Hidden="@false"
+                                   InputClass="absolute mud-width-full mud-height-full overflow-hidden z-20"
+                                   InputStyle="opacity:0"
+                                   @ondragenter="@SetDragClass"
+                                   @ondragleave="@ClearDragClass"
+                                   @ondragend="@ClearDragClass">
+                        <ButtonTemplate Context="ButtonContext">
+                            <MudPaper Height="300px"
+                                      Outlined="true"
+                                      Class="@_dragClass">
+                                <MudText Typo="Typo.h6">
+                                    Drag and drop files here or click
+                                </MudText>
+                                @foreach (var file in _fileNames)
+                                {
+                                    <MudChip Color="Color.Dark" Text="@file" />
+                                }
+                            </MudPaper>
+                            <MudToolBar DisableGutters="true"
+                                        Class="relative d-flex justify-end gap-4 z-30">
+                                <MudButton HtmlTag="label"
+                                           Color="Color.Primary"
+                                           for="@ButtonContext.Id"
+                                           Variant="Variant.Filled">
+                                    Open file picker
+                                </MudButton>
+                                <MudButton Color="Color.Primary"
+                                           Disabled="@(!_fileNames.Any())"
+                                           Variant="Variant.Filled">
+                                    Upload
+                                </MudButton>
+                                <MudButton OnClick="@Clear"
+                                           Color="Color.Error"
+                                           Disabled="@(!_fileNames.Any())"
+                                           Variant="Variant.Filled">
+                                    Clear
+                                </MudButton>
+                            </MudToolBar>
+                        </ButtonTemplate>
+                    </MudFileUpload>
+                </MudStack>
+                <ValidationMessage For="() => BookModel.BookImages" class="text-danger" />
+            </div>
+            <!-- Add a preview section below the InputSelect to display selected images -->
+            @foreach (var base64 in base64data)
             {
-                <span class="btn-ring"></span>
+                <div id="img-preview">
+                    <img src="@base64" />
+                </div>
             }
-        </button>
-    </div>
-</EditForm>
+            <div class="form-group text-right">
+                <button type="submit" class="btn-process" disabled="@isProcessing">
+                    Add
+                    @if (isProcessing)
+                    {
+                        <span class="btn-ring"></span>
+                    }
+                </button>
+            </div>
+        </EditForm>
+    </Authorized>
+</AuthorizeView>
+
+
 
 
 

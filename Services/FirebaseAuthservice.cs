@@ -1,7 +1,12 @@
 ﻿using Firebase.Auth;
 
-namespace BookshelfXchange.Repository
+namespace BookShelfXChange.Services
 {
+    public class FirebaseTokens
+    {
+        public required string IdToken { get; set; }
+        public required string RefreshToken { get; set; }
+    }
     public class FirebaseAuthService
     {
         private readonly FirebaseAuthClient _firebaseAuth;
@@ -18,11 +23,32 @@ namespace BookshelfXchange.Repository
             return userCredentials is null ? null : userCredentials.User;
         }
 
-        public async Task<User?> Login(string email, string password)
+        public async Task<FirebaseTokens> Login(string email, string password)
         {
-            var userCredentials = await _firebaseAuth.SignInWithEmailAndPasswordAsync(email, password);
+            try
+            {
+                var authUser = await _firebaseAuth.SignInWithEmailAndPasswordAsync(email, password);
 
-            return userCredentials is null ? null : userCredentials.User;
+                if (authUser is null)
+                {
+                    throw new Exception("User not found");
+                }
+
+                string token = await authUser.User.GetIdTokenAsync();
+
+                if (token is null)
+                {
+                    throw new Exception("Token not found");
+                }
+
+                var refresh = authUser.User.Credential.RefreshToken;
+
+                return new FirebaseTokens { IdToken = token, RefreshToken = refresh };
+            }
+            catch (Exception)
+            {
+                throw new Exception("User not found");
+            }
         }
 
         public void SignOut() => _firebaseAuth.SignOut();

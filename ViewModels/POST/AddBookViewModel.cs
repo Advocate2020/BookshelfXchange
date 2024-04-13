@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Components.Forms;
+using System.ComponentModel.DataAnnotations;
 
 namespace BookshelfXchange.ViewModels.POST
 {
@@ -16,5 +17,9 @@ namespace BookshelfXchange.ViewModels.POST
         [Range(1, 5000, ErrorMessage = "Category is missing")]
         public int CategoryId { get; set; }
 
+        [Required(ErrorMessage = "Please select one or more images.")]
+
+        public List<IBrowserFile> BookImages { get; set; }
     }
+
 }

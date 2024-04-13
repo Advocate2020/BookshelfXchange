@@ -1,0 +1,18 @@
+﻿@page "/sign-out"
+@using Microsoft.AspNetCore.Authentication
+@inject NavigationManager NavigationManager
+
+@code {
+       
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await HttpContext.SignOutAsync(Constants.CookieName);
+        HttpContext.Response.Cookies.Delete("idToken");
+        HttpContext.Response.Cookies.Delete("refreshToken");
+
+        NavigationManager.NavigateTo("/");
+    }
+}

@@ -1,43 +1,45 @@
 ﻿using Blazored.Toast.Services;
-using BookshelfXchange.Middleware;
-using BookshelfXchange.Repository;
-using BookshelfXchange.Services;
 using BookshelfXchange.ViewModels.POST;
+using BookShelfXChange.Models;
+using BookShelfXChange.Services;
 using FirebaseAdmin.Auth;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
+using System.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
-
-namespace BookshelfXchange.Components.Pages.Auth
+namespace BookShelfXChange.Components.Pages
 {
+    [AllowAnonymous]
     public partial class SignIn
     {
         [SupplyParameterFromForm]
         private LoginViewModel Login { get; set; } = new();
 
-
-
-        [Inject]
-        NavigationManager NavigationManager { get; set; }
-
         [Inject]
         FirebaseAuthService AuthService { get; set; }
 
-        [Inject]
-        private ICookie CookieService { get; set; }
+        [CascadingParameter]
+        private HttpContext HttpContext { get; set; } = default!;
 
         private bool isProcessing = false;
+        private bool isAdmin = false;
+        private bool isUser = false;
 
-        [CascadingParameter]
-        public Task<AuthenticationState> AuthenticationStateTask { get; set; }
+        [SupplyParameterFromQuery]
+        private string? ReturnUrl { get; set; }
 
-        [Inject]
-        public CustomAuthenticationStateProvider AuthenticationStateProvider { get; set; }
+        protected override async Task OnInitializedAsync()
+        {
+            if (HttpMethods.IsGet(HttpContext.Request.Method))
+            {
+                // Clear the existing external cookie to ensure a clean login process
+                await HttpContext.SignOutAsync("devAuth");
+            }
+        }
 
-        [Inject]
-        private HttpClient httpClient { get; set; }
 
         private async Task LoginUser()
         {
@@ -48,21 +50,11 @@ namespace BookshelfXchange.Components.Pages.Auth
                 var email = Login.Email;
 
                 // Authenticate user
-                var user = await AuthService.Login(Login.Email, Login.Password);
+                var tokens = await AuthService.Login(Login.Email, Login.Password);
 
-                if (user != null)
+                if (tokens.IdToken != null)
                 {
-                    // Get the user's token
-                    var token = await user.GetIdTokenAsync();
-
-                    // Set cookies
-                    await CookieService.SetValue("Email", Login.Email);
-                    await CookieService.SetValue("FirebaseToken", token);
-
-                    // Add token to request headers
-                    //httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-                    var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
+                    var jwt = new JwtSecurityTokenHandler().ReadJwtToken(tokens.IdToken);
 
                     List<string> roles = jwt.Claims
                         .Where(c => c.Type == ClaimTypes.Role)
@@ -70,30 +62,25 @@ namespace BookshelfXchange.Components.Pages.Auth
                         .ToList();
 
                     var x = new ClaimsIdentity(jwt.Claims, "FirebaseToken");
+                    x.AddClaim(new Claim(ClaimTypes.Name, Login.Email));
                     ClaimsPrincipal claimsPrincipal = new(x);
 
-                    // Notify authentication state
-                    AuthenticationStateProvider.SetAuthenticationState(claimsPrincipal);
-                    var authState = await AuthenticationStateTask;
-                    isProcessing = false;
 
-                    // Show success message
+                    await HttpContext.SignInAsync("devAuth", claimsPrincipal);
+
+                    StateHandler.SetUserState(HttpContext, tokens.IdToken, tokens.RefreshToken);
+
+
                     toastService.ShowToast(ToastLevel.Success, "Successfully logged in.");
-
                     // Reset the User object
                     Login = new LoginViewModel();
+                    isProcessing = false;
 
-                    string url = GetQueryParm("returnUrl");
 
-                    if (string.IsNullOrEmpty(url))
-                    {
-                        // Redirect to the desired page
-                        NavigationManager.NavigateTo("/admin", true);
-                    }
-                    else
-                    {
-                        NavigationManager.NavigateTo($"{url}");
-                    }
+
+                    isAdmin = roles.Contains(RoleTypes.ADMIN.Name);
+                    isUser = roles.Contains(RoleTypes.USER.Name);
+
 
                 }
                 else
@@ -101,6 +88,7 @@ namespace BookshelfXchange.Components.Pages.Auth
                     isProcessing = false;
                     throw new Exception("Failed to create user.");
                 }
+
             }
             catch (FirebaseAuthException ex)
             {
@@ -109,13 +97,30 @@ namespace BookshelfXchange.Components.Pages.Auth
                 AuthResultStatus status = FirebaseAuthExceptionHandler.HandleException(ex);
                 string error = FirebaseAuthExceptionHandler.GenerateExceptionMessage(status);
 
-                toastService.ShowToast(ToastLevel.Error, error);
+                //toastService.ShowToast(ToastLevel.Error, error);
             }
             catch (Exception ex)
             {
                 isProcessing = false;
                 // Log or handle other exceptions as needed
-                toastService.ShowToast(ToastLevel.Error, $"Error occurred while logging in: {ex.Message}");
+                //toastService.ShowToast(ToastLevel.Error, $"Error occurred while logging in: {ex.Message}");
+            }
+            finally
+            {
+                string url = GetQueryParm("returnUrl");
+
+                if (isAdmin && string.IsNullOrEmpty(ReturnUrl))
+                {
+                    // Show success message
+
+                    RedirectManager.NavigateTo("/admin");
+                }
+                else if (isUser)
+                {
+
+                    RedirectManager.NavigateTo(url);
+
+                }
             }
         }
 
@@ -133,7 +138,6 @@ namespace BookshelfXchange.Components.Pages.Auth
 
             return returnUrl;
         }
-
 
     }
 }
